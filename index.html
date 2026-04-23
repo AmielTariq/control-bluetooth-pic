@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control PIC18F4550</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f4; }
+        .btn { padding: 20px; width: 80%; margin: 10px; font-size: 20px; cursor: pointer; border-radius: 8px; border: none; }
+        .on { background-color: #4CAF50; color: white; }
+        .off { background-color: #f44336; color: white; }
+        .connect { background-color: #2196F3; color: white; }
+    </style>
+</head>
+<body>
+
+    <h1>Panel de Control HC-05</h1>
+    <button class="btn connect" onclick="conectarBT()">🔗 Conectar Bluetooth</button>
+    <hr>
+    
+    <h3>LED 1</h3>
+    <button class="btn on" onclick="enviarDato('a')">Encender (A)</button>
+    <button class="btn off" onclick="enviarDato('b')">Apagar (B)</button>
+
+    <h3>LED 2</h3>
+    <button class="btn on" onclick="enviarDato('c')">Encender (C)</button>
+    <button class="btn off" onclick="enviarDato('d')">Apagar (D)</button>
+
+    <script>
+        let caracteristicaGATT = null;
+
+        async function conectarBT() {
+            try {
+                const dispositivo = await navigator.bluetooth.requestDevice({
+                    filters: [{ namePrefix: 'HC' }], // Filtra por nombres que empiecen con HC
+                    optionalServices: ['00001101-0000-1000-8000-00805f9b34fb'] // UUID estándar puerto serial
+                });
+
+                const servidor = await dispositivo.gatt.connect();
+                const servicio = await servidor.getPrimaryService('00001101-0000-1000-8000-00805f9b34fb');
+                caracteristicaGATT = await servicio.getCharacteristic('00001101-0000-1000-8000-00805f9b34fb');
+                
+                alert("Conectado con éxito a " + dispositivo.name);
+            } catch (error) {
+                console.log("Error: " + error);
+                alert("No se pudo conectar. Asegúrate de usar HTTPS.");
+            }
+        }
+
+        async function enviarDato(caracter) {
+            if (caracteristicaGATT) {
+                const encoder = new TextEncoder();
+                await caracteristicaGATT.writeValue(encoder.encode(caracter));
+            } else {
+                alert("Primero conecta el Bluetooth");
+            }
+        }
+    </script>
+</body>
+</html>
